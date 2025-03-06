@@ -2,7 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using TicketBookingSystem.Models;
 
 var builder = WebApplication.CreateBuilder(args);
-
+builder.Services.AddSwaggerGen(); 
 // Add services to the container.
 builder.Services.AddControllers();
 

@@ -5,11 +5,12 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration.UserSecrets;
 using TicketBookingSystem.Models;
 
 namespace TicketBookingSystem.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/user")]
     [ApiController]
     public class UserController : ControllerBase
     {
@@ -21,7 +22,7 @@ namespace TicketBookingSystem.Controllers
         }
 
         // GET: api/User
-        [HttpGet]
+        [HttpGet("GetUsers")]
         public async Task<ActionResult<IEnumerable<User>>> GetUsers()
         {
             return await _context.Users.ToListAsync();
@@ -29,7 +30,7 @@ namespace TicketBookingSystem.Controllers
 
         // GET: api/User/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<User>> GetUser(long id)
+        public async Task<ActionResult<User>> GetUser(string? id)
         {
             var user = await _context.Users.FindAsync(id);
 
@@ -44,7 +45,7 @@ namespace TicketBookingSystem.Controllers
         // PUT: api/User/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutUser(long id, User user)
+        public async Task<IActionResult> PutUser(string? id, User user)
         {
             if (id != user.UserId)
             {
@@ -72,16 +73,6 @@ namespace TicketBookingSystem.Controllers
             return NoContent();
         }
 
-        // POST: api/User
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPost]
-        public async Task<ActionResult<User>> PostUser(User user)
-        {
-            _context.Users.Add(user);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction("GetUser", new { id = user.UserId }, user);
-        }
 
         // DELETE: api/User/5
         [HttpDelete("{id}")]
@@ -99,7 +90,7 @@ namespace TicketBookingSystem.Controllers
             return NoContent();
         }
 
-        private bool UserExists(long id)
+        private bool UserExists(string? id)
         {
             return _context.Users.Any(e => e.UserId == id);
         }

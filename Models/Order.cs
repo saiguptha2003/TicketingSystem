@@ -2,15 +2,15 @@ namespace TicketBookingSystem.Models
 {
     public class Order
     {
-        public long OrderId { get; set; }
+        public string? OrderId { get; set; }
 
         // Foreign Key to User
-        public required long UserId { get; set; }
-        public User User { get; set; } // Navigation property to User
+        public required string? UserId { get; set; }
+        public User? User { get; set; } // Navigation property to User
 
         // Foreign Key to Showtime
-        public required long ShowTimeId { get; set; }
-        public Showtime Showtime { get; set; } // Navigation property to Showtime
+        public required string? ShowTimeId { get; set; }
+        public Showtime? Showtime { get; set; } // Navigation property to Showtime
 
         public required decimal TotalAmount { get; set; }
         public required DateTime BookingTime { get; set; }
