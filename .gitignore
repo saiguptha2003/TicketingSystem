@@ -1,0 +1,30 @@
+# Ignore build results
+/bin/
+/obj/
+
+/# Ignore configuration files that may contain sensitive information
+appsettings.Development.json
+
+# Ignore the SQLite database file
+*.db
+
+# Ignore user-specific files
+.vscode/
+.idea/
+
+# User-specific files
+*.user
+*.userosscache
+*.suo
+*.userprefs
+
+# Windows installer files
+Thumbs.db
+ehthumbs.db
+
+# JetBrains Rider files
+.idea/
+
+# ASP.NET Scaffolding
+ScaffoldingReadMe.txt
+
