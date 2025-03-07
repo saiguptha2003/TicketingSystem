@@ -8,9 +8,11 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration.UserSecrets;
 using TicketBookingSystem.Models;
 using TicketBookingSystem.Dtos;
+using TicketBookingSystem.Services;
 namespace TicketBookingSystem.Controllers
+
 {
-    [Route("api/auth")]
+    [Route("api/auth/user")]
     [ApiController]
     public class AuthController : ControllerBase
     {
@@ -56,9 +58,11 @@ namespace TicketBookingSystem.Controllers
             {
                 return NotFound();
             }
+            var token = JWT.GenerateJwtToken(user.UserName,user.UserId);
             var userRes=new LoginResDTO{
                 UserId=user.UserId,
                 UserName=user.UserName,
+                Token=token,
                 Email=user.Email
             };
             return userRes;

@@ -2,10 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration.UserSecrets;
+using TicketBookingSystem.Dtos;
 using TicketBookingSystem.Models;
 
 namespace TicketBookingSystem.Controllers
@@ -21,18 +22,21 @@ namespace TicketBookingSystem.Controllers
             _context = context;
         }
 
-        // GET: api/User
-        [HttpGet("GetUsers")]
-        public async Task<ActionResult<IEnumerable<User>>> GetUsers()
+        // GET: api/user
+        [HttpGet]
+        [Authorize]
+        public async Task<ActionResult<User>> GetUser()
         {
-            return await _context.Users.ToListAsync();
-        }
+            // Retrieve the userId from the JWT token
+            var userId = User.FindFirst("userId")?.Value;
 
-        // GET: api/User/5
-        [HttpGet("{id}")]
-        public async Task<ActionResult<User>> GetUser(string? id)
-        {
-            var user = await _context.Users.FindAsync(id);
+            if (userId == null)
+            {
+                return Unauthorized("User ID is missing from the token.");
+            }
+
+            // Find the user by their userId
+            var user = await _context.Users.FindAsync(userId);
 
             if (user == null)
             {
@@ -42,14 +46,23 @@ namespace TicketBookingSystem.Controllers
             return user;
         }
 
-        // PUT: api/User/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutUser(string? id, User user)
+        // PUT: api/user
+        [HttpPut]
+        [Authorize]
+        public async Task<IActionResult> PutUser(User user)
         {
-            if (id != user.UserId)
+            // Retrieve the userId from the JWT token
+            var userId = User.FindFirst("userId")?.Value;
+
+            if (userId == null)
             {
-                return BadRequest();
+                return Unauthorized("User ID is missing from the token.");
+            }
+
+            // Ensure the logged-in user is trying to modify their own data
+            if (user.UserId != userId)
+            {
+                return Unauthorized("You are not authorized to modify this user's data.");
             }
 
             _context.Entry(user).State = EntityState.Modified;
@@ -60,7 +73,7 @@ namespace TicketBookingSystem.Controllers
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!UserExists(id))
+                if (!UserExists(user.UserId))
                 {
                     return NotFound();
                 }
@@ -73,12 +86,20 @@ namespace TicketBookingSystem.Controllers
             return NoContent();
         }
 
-
-        // DELETE: api/User/5
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteUser(long id)
+        // DELETE: api/user
+        [HttpDelete]
+        [Authorize]
+        public async Task<IActionResult> DeleteUser()
         {
-            var user = await _context.Users.FindAsync(id);
+            // Retrieve the userId from the JWT token
+            var userId = User.FindFirst("userId")?.Value;
+
+            if (userId == null)
+            {
+                return Unauthorized("User ID is missing from the token.");
+            }
+
+            var user = await _context.Users.FindAsync(userId);
             if (user == null)
             {
                 return NotFound();
@@ -89,10 +110,50 @@ namespace TicketBookingSystem.Controllers
 
             return NoContent();
         }
-
-        private bool UserExists(string? id)
+        [HttpGet("bookings")]
+        [Authorize]
+        public async Task<ActionResult<IEnumerable<OrderResDTO>>> UserBookings()
         {
-            return _context.Users.Any(e => e.UserId == id);
+            var userId = User.FindFirst("userId")?.Value;
+
+            if (userId == null)
+            {
+                return Unauthorized("User ID is missing from the token.");
+            }
+
+            // Get all orders for the specific user, including related showtimes
+            var orders = await _context.Orders
+                .Where(o => o.UserId == userId)  // Find all orders for the specific user
+                .Include(o => o.Showtime)        // Include related Showtime data
+                .ThenInclude(s => s.Movie)       // Include related Movie data
+                .ToListAsync();
+
+            // If no orders are found, return a NotFound response
+            if (!orders.Any())  // Just check if the list is empty
+            {
+                return NotFound("No orders found for this user.");
+            }
+
+            // Map the orders to OrderResDTOs
+            var orderResDTOs = orders.Select(o => new OrderResDTO
+            {
+                OrderId = o.OrderId,
+                ShowTimeId=o.ShowTimeId,
+                ShowDate=o.Showtime.ShowDate,
+                ShowTime=o.Showtime.ShowTime,
+                BookingTime = o.BookingTime,
+                TotalAmount = o.TotalAmount,
+                SeatsBooked = o.SeatsBooked,
+                UpdatedTime=o.UpdatedTime,
+            }).ToList();
+
+            // Return the DTOs
+            return Ok(orderResDTOs);
+        }
+
+        private bool UserExists(string userId)
+        {
+            return _context.Users.Any(e => e.UserId == userId);
         }
     }
 }
